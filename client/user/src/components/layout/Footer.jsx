@@ -5,7 +5,7 @@ const Footer = () => {
       <p>
         Developed with ❤ by{" "}
         <a
-          href="https://github.com/RijoKsd"
+          href="https://github.com/sadhef"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500 hover:underline"
