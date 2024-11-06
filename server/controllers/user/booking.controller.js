@@ -11,58 +11,13 @@ import chalk from "chalk";
 import razorpay from "../../config/razorpay.js";
 import crypto from "crypto";
 
-// Create order for payment
-export const createOrder = async (req, res) => {
-  try {
-    const { totalPrice } = req.body;
-    const userId = req.user.user;
-
-    const user = await User.findById(userId).select("name email");
-    if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
-      });
-    }
-
-    const options = {
-      amount: Math.round(totalPrice * 100), // amount in paisa
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-      notes: {
-        userId: userId.toString()
-      }
-    };
-
-    console.log("Creating order with options:", options);
-
-    const order = await razorpay.orders.create(options);
-    
-    console.log("Order created:", order);
-
-    return res.status(200).json({ 
-      success: true, 
-      order, 
-      user 
-    });
-
-  } catch (error) {
-    console.error("Order creation error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create order",
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
-  }
-};
-
-// Verify payment and create booking
 export const verifyPayment = async (req, res) => {
   try {
-    const userId = req.user.user;
-    
-    console.log("Received verify payment request for user:", userId);
-    console.log("Request body:", req.body);
+    // Log request details
+    console.log("Payment verification request received:", {
+      body: req.body,
+      user: req.user
+    });
 
     const {
       id: turfId,
@@ -75,73 +30,137 @@ export const verifyPayment = async (req, res) => {
       razorpay_signature
     } = req.body;
 
-    // Verify signature
-    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
-    const data = `${orderId}|${paymentId}`;
-    hmac.update(data);
-    const generatedSignature = hmac.digest('hex');
+    // Basic validation
+    if (!turfId || !startTime || !endTime || !selectedTurfDate || !paymentId || !orderId || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required payment fields"
+      });
+    }
 
-    if (generatedSignature !== razorpay_signature) {
-      console.log("Signature verification failed");
+    // Verify Razorpay signature
+    try {
+      const secret = process.env.RAZORPAY_KEY_SECRET;
+      const generated_signature = crypto
+        .createHmac('sha256', secret)
+        .update(`${orderId}|${paymentId}`)
+        .digest('hex');
+
+      if (generated_signature !== razorpay_signature) {
+        console.error("Signature verification failed");
+        return res.status(400).json({
+          success: false,
+          message: "Invalid payment signature"
+        });
+      }
+    } catch (signatureError) {
+      console.error("Signature verification error:", signatureError);
       return res.status(400).json({
         success: false,
         message: "Payment signature verification failed"
       });
     }
 
-    // Format dates
-    const formattedStartTime = format(parseISO(startTime), "hh:mm a");
-    const formattedEndTime = format(parseISO(endTime), "hh:mm a");
-    const formattedDate = format(parseISO(selectedTurfDate), "d MMM yyyy");
-
-    // Get user and turf details
-    const [user, turf] = await Promise.all([
-      User.findById(userId),
-      Turf.findById(turfId)
-    ]);
-
-    if (!user || !turf) {
-      throw new Error(!user ? "User not found" : "Turf not found");
+    // Verify payment status with Razorpay
+    try {
+      const payment = await razorpay.payments.fetch(paymentId);
+      if (payment.status !== 'captured') {
+        return res.status(400).json({
+          success: false,
+          message: "Payment not completed"
+        });
+      }
+    } catch (paymentError) {
+      console.error("Payment verification error:", paymentError);
+      return res.status(400).json({
+        success: false,
+        message: "Failed to verify payment status"
+      });
     }
 
-    // Generate QR Code
-    const QRcode = await generateQRCode(
-      totalPrice,
-      formattedStartTime,
-      formattedEndTime,
-      formattedDate,
-      turf.name,
-      turf.location
-    );
+    // Get user and turf details
+    const userId = req.user.user;
+    let user, turf;
 
-    // Create time slot
-    const timeSlot = await TimeSlot.create({
-      turf: turfId,
-      startTime: parseISO(startTime),
-      endTime: parseISO(endTime)
-    });
+    try {
+      [user, turf] = await Promise.all([
+        User.findById(userId),
+        Turf.findById(turfId)
+      ]);
 
-    // Create booking
-    const booking = await Booking.create({
-      user: userId,
-      turf: turfId,
-      timeSlot: timeSlot._id,
-      totalPrice,
-      qrCode: QRcode,
-      payment: {
-        orderId,
-        paymentId,
-        status: 'completed'
-      },
-      status: 'confirmed'
-    });
+      if (!user || !turf) {
+        throw new Error(!user ? "User not found" : "Turf not found");
+      }
+    } catch (fetchError) {
+      console.error("Error fetching user/turf:", fetchError);
+      return res.status(404).json({
+        success: false,
+        message: fetchError.message
+      });
+    }
 
-    // Update user's bookings
-    await User.findByIdAndUpdate(userId, {
-      $push: { bookings: booking._id }
-    });
+    // Format dates and generate QR code
+    let formattedStartTime, formattedEndTime, formattedDate, QRcode;
+    try {
+      formattedStartTime = format(parseISO(startTime), "hh:mm a");
+      formattedEndTime = format(parseISO(endTime), "hh:mm a");
+      formattedDate = format(parseISO(selectedTurfDate), "d MMM yyyy");
 
-    // Send confirmation email
+      QRcode = await generateQRCode(
+        totalPrice,
+        formattedStartTime,
+        formattedEndTime,
+        formattedDate,
+        turf.name,
+        turf.location
+      );
+    } catch (formatError) {
+      console.error("Error formatting dates or generating QR code:", formatError);
+      return res.status(500).json({
+        success: false,
+        message: "Error processing booking details"
+      });
+    }
+
+    // Create time slot and booking
+    let timeSlot, booking;
+    try {
+      timeSlot = await TimeSlot.create({
+        turf: turfId,
+        startTime: parseISO(startTime),
+        endTime: parseISO(endTime),
+        isBooked: true
+      });
+
+      booking = await Booking.create({
+        user: userId,
+        turf: turfId,
+        timeSlot: timeSlot._id,
+        totalPrice,
+        qrCode: QRcode,
+        payment: {
+          orderId,
+          paymentId,
+          status: 'completed'
+        },
+        status: 'confirmed'
+      });
+
+      await User.findByIdAndUpdate(userId, {
+        $push: { bookings: booking._id }
+      });
+    } catch (bookingError) {
+      console.error("Error creating booking:", bookingError);
+      if (timeSlot && timeSlot._id) {
+        await TimeSlot.findByIdAndDelete(timeSlot._id);
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create booking"
+      });
+    }
+
+    // Send email confirmation
     try {
       const htmlContent = generateHTMLContent(
         turf.name,
@@ -160,9 +179,10 @@ export const verifyPayment = async (req, res) => {
       );
     } catch (emailError) {
       console.error("Email sending failed:", emailError);
-      // Continue as booking was successful
+      // Don't fail the booking if email fails
     }
 
+    // Return success response
     return res.status(200).json({
       success: true,
       message: "Booking confirmed successfully!",
@@ -187,7 +207,61 @@ export const verifyPayment = async (req, res) => {
   }
 };
 
-// Get user's bookings
+export const createOrder = async (req, res) => {
+  try {
+    console.log("Create order request received:", req.body);
+
+    const { totalPrice } = req.body;
+    if (!totalPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Total price is required"
+      });
+    }
+
+    const userId = req.user.user;
+    const user = await User.findById(userId).select("name email");
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const options = {
+      amount: Math.round(totalPrice * 100),
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      notes: {
+        userId: userId.toString(),
+        userEmail: user.email
+      }
+    };
+
+    console.log("Creating Razorpay order with options:", options);
+
+    const order = await razorpay.orders.create(options);
+    console.log("Razorpay order created:", order);
+
+    return res.status(200).json({
+      success: true,
+      order,
+      user: {
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error("Order creation error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create order",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
 export const getBookings = async (req, res) => {
   try {
     const userId = req.user.user;
