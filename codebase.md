@@ -8566,11 +8566,6 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true, // Important for CORS
-  headers: {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
-  }
 });
 
 
@@ -12669,9 +12664,7 @@ export default User;
  % % % %u t i l s  
                  a d j u s t T i m e . j s  
                  c l o u d i n a r y . j s  
-                 e r r o r H a n d l e r . j s  
                  g e n e r a t e E m a i l . j s  
-                 g e n e r a t e H T M L C o n t e n t . j s  
                  g e n e r a t e J w t T o k e n . j s  
                  g e n e r a t e Q R C o d e . j s  
  
@@ -13211,60 +13204,121 @@ import connectDB from './config/database.js';
 import dotenv from 'dotenv';
 import rootRouter from './routes/index.js';
 import chalk from 'chalk';
+import cloudinary from './utils/cloudinary.js';
+import Razorpay from 'razorpay';
+import mongoose from 'mongoose';
 
 // Load environment variables
-dotenv.config({
-  path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env'
-});
+dotenv.config();
 
 const app = express();
 
-// Enhanced CORS configuration
+// Initialize Razorpay with your credentials
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// Enhanced CORS configuration for your specific domains
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+  origin: [
+    'https://rifield-web-appuser-65d9.vercel.app',
+    'https://rifield-web-appmanager.vercel.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400 // 24 hours
+  exposedHeaders: ['Authorization'],
+  maxAge: 86400
 };
 
-// Middleware
+// Middleware setup
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(cors(corsOptions));
 
-// Request logging middleware
+// Configure cloudinary with your credentials
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Verify JWT token middleware
 app.use((req, res, next) => {
-  console.log(chalk.cyan(`${req.method} ${req.path} [${new Date().toISOString()}]`));
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    req.token = authHeader.slice(7);
+  }
   next();
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    message: 'Server is running',
-    environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+// Enhanced request logging
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(chalk.cyan(`[${timestamp}] ${req.method} ${req.path}`));
+  console.log(chalk.gray('Origin:', req.headers.origin));
+  console.log(chalk.gray('Auth:', req.headers.authorization ? 'Present' : 'None'));
+  next();
+});
+
+// Health check endpoint with detailed service status
+app.get('/health', async (req, res) => {
+  try {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    
+    const cloudinaryStatus = await cloudinary.api.ping()
+      .then(() => 'connected')
+      .catch(() => 'error');
+
+    const razorpayStatus = await razorpay.orders.all({ count: 1 })
+      .then(() => 'connected')
+      .catch(() => 'error');
+
+    res.status(200).json({
+      status: 'ok',
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbStatus,
+        cloudinary: cloudinaryStatus,
+        razorpay: razorpayStatus
+      },
+      urls: {
+        client: process.env.CLIENT_URL,
+        owner: process.env.OWNER_URL,
+        api: process.env.API_URL
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
 });
 
 // API routes
 app.use('/api', rootRouter);
 
-// 404 handler
+// 404 handler with improved error messages
 app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
-    path: req.originalUrl
+    path: req.originalUrl,
+    availableEndpoints: {
+      auth: '/api/auth',
+      user: '/api/user',
+      owner: '/api/owner',
+      admin: '/api/admin'
+    }
   });
 });
 
-// Global error handling middleware
+// Comprehensive error handler
 app.use((err, req, res, next) => {
-  console.error(chalk.red('Error:'), err);
+  console.error(chalk.red('Error:', err));
 
   // MongoDB errors
   if (err.name === 'MongoError' || err.name === 'MongoServerError') {
@@ -13275,20 +13329,11 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Validation errors
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation error',
-      errors: Object.values(err.errors).map(e => e.message)
-    });
-  }
-
   // JWT errors
   if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token'
+      message: err.name === 'TokenExpiredError' ? 'Token has expired' : 'Invalid token'
     });
   }
 
@@ -13296,49 +13341,8 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? {
-      stack: err.stack,
-      details: err
-    } : undefined
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
-});
-
-// Enhanced error handling for uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error(chalk.red('⚠️ Uncaught Exception:'));
-  console.error(error);
-  
-  // Send error to your error tracking service here (e.g., Sentry)
-  
-  if (process.env.NODE_ENV === 'development') {
-    process.exit(1);
-  }
-});
-
-// Enhanced error handling for unhandled promise rejections
-process.on('unhandledRejection', (error) => {
-  console.error(chalk.red('⚠️ Unhandled Rejection:'));
-  console.error(error);
-  
-  // Send error to your error tracking service here (e.g., Sentry)
-  
-  if (process.env.NODE_ENV === 'development') {
-    process.exit(1);
-  }
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log(chalk.yellow('SIGTERM received. Performing graceful shutdown...'));
-  // Close database connection and other resources
-  try {
-    await mongoose.connection.close();
-    console.log(chalk.green('MongoDB connection closed.'));
-    process.exit(0);
-  } catch (err) {
-    console.error(chalk.red('Error during graceful shutdown:'), err);
-    process.exit(1);
-  }
 });
 
 const PORT = process.env.PORT || 5000;
@@ -13346,15 +13350,28 @@ const PORT = process.env.PORT || 5000;
 // Enhanced server startup
 const startServer = async () => {
   try {
-    // Connect to database
+    // Connect to MongoDB
     await connectDB();
     console.log(chalk.green('✓ MongoDB Connected'));
+
+    // Verify essential services
+    console.log(chalk.yellow('Verifying services...'));
+
+    // Verify Cloudinary
+    await cloudinary.api.ping();
+    console.log(chalk.green('✓ Cloudinary Connected'));
+
+    // Verify Razorpay
+    await razorpay.orders.all({ count: 1 });
+    console.log(chalk.green('✓ Razorpay Connected'));
 
     // Start server
     const server = app.listen(PORT, () => {
       console.log(chalk.green(`✓ Server running on port ${PORT}`));
       console.log(chalk.cyan(`✓ Environment: ${process.env.NODE_ENV}`));
-      console.log(chalk.cyan(`✓ CORS enabled for: ${corsOptions.origin}`));
+      console.log(chalk.cyan(`✓ API URL: ${process.env.API_URL}`));
+      console.log(chalk.cyan(`✓ Client URL: ${process.env.CLIENT_URL}`));
+      console.log(chalk.cyan(`✓ Owner URL: ${process.env.OWNER_URL}`));
     });
 
     // Handle server errors
@@ -13368,16 +13385,27 @@ const startServer = async () => {
 
   } catch (error) {
     console.error(chalk.red('Failed to start server:'), error);
-    if (process.env.NODE_ENV === 'development') {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 };
 
-// Start the server
+// Start server with error handling
 startServer().catch((error) => {
   console.error(chalk.red('Server startup failed:'), error);
   process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log(chalk.yellow('SIGTERM received. Shutting down gracefully...'));
+  try {
+    await mongoose.connection.close();
+    console.log(chalk.green('✓ MongoDB connection closed'));
+    process.exit(0);
+  } catch (err) {
+    console.error(chalk.red('Error during shutdown:'), err);
+    process.exit(1);
+  }
 });
 
 export default app;
@@ -13434,27 +13462,6 @@ export default cloudinary;
 
 
 
-```
-
-# server\utils\errorHandler.js
-
-```js
-export class AppError extends Error {
-    constructor(message, statusCode) {
-      super(message);
-      this.statusCode = statusCode;
-      this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-      this.isOperational = true;
-  
-      Error.captureStackTrace(this, this.constructor);
-    }
-  }
-  
-  export const catchAsync = (fn) => {
-    return (req, res, next) => {
-      fn(req, res, next).catch(next);
-    };
-  };
 ```
 
 # server\utils\generateEmail.js
@@ -13567,61 +13574,6 @@ export const generateHTMLContent = (turfName, location,date,startTime,endTime,to
 `;
 };
 
-```
-
-# server\utils\generateHTMLContent.js
-
-```js
-// server/utils/generateHTMLContent.js
-export const generateHTMLContent = (title, message) => {
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .header {
-              background-color: #4CAF50;
-              color: white;
-              padding: 20px;
-              text-align: center;
-            }
-            .content {
-              padding: 20px;
-              background-color: #f9f9f9;
-            }
-            .footer {
-              text-align: center;
-              padding: 20px;
-              color: #666;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${title}</h1>
-            </div>
-            <div class="content">
-              ${message.replace(/\n/g, '<br>')}
-            </div>
-            <div class="footer">
-              <p>Thank you for using our service!</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-  };
 ```
 
 # server\utils\generateJwtToken.js

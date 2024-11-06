@@ -52,39 +52,29 @@ export const verifyPayment = async (req, res) => {
     const formattedEndTime = format(parseISO(endTime), "hh:mm a");
     const formattedDate = format(parseISO(selectedTurfDate), "d MMM yyyy");
 
-    // verify the Razorpay signature
+    // Verify signature
     const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
     hmac.update(`${orderId}|${paymentId}`);
     const generatedSignature = hmac.digest("hex");
+    
     if (generatedSignature !== razorpay_signature) {
-      console.log("Payment Verification Failed");
-      return res
-        .status(400)
-        .json({ success: false, message: "Payment Verification Failed" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Payment verification failed" 
+      });
     }
 
-    // payment successful
-
-    //  why format here?
-    // This time is storing in DB for the time slot that is created
-    const adjustedStartTime = adjustTime(startTime, selectedTurfDate);
-    const adjustedEndTime = adjustTime(endTime, selectedTurfDate);
-
+    // Get user and turf details
     const [user, turf] = await Promise.all([
       User.findById(userId),
       Turf.findById(turfId),
     ]);
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
+
+    if (!user || !turf) {
+      throw new Error(!user ? "User not found" : "Turf not found");
     }
 
-    if (!turf) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Turf not found" });
-    }
-
-    //  generate QR code
+    // Generate QR Code
     const QRcode = await generateQRCode(
       totalPrice,
       formattedStartTime,
@@ -95,70 +85,63 @@ export const verifyPayment = async (req, res) => {
     );
 
     // Create time slot and booking
+    const adjustedStartTime = adjustTime(startTime, selectedTurfDate);
+    const adjustedEndTime = adjustTime(endTime, selectedTurfDate);
 
-    const [timeSlot, booking] = await Promise.all([
-      TimeSlot.create({
-        turf: turfId,
-        startTime: adjustedStartTime,
-        endTime: adjustedEndTime,
-      }),
-      Booking.create({
-        user: userId,
-        turf: turfId,
-        timeSlot: null, // Will be updated after TimeSlot is created
-        totalPrice,
-        qrCode: QRcode,
-        payment: { orderId, paymentId },
-      }),
-    ]);
+    const timeSlot = await TimeSlot.create({
+      turf: turfId,
+      startTime: adjustedStartTime,
+      endTime: adjustedEndTime,
+    });
 
-    // Update the booking with time slot
+    const booking = await Booking.create({
+      user: userId,
+      turf: turfId,
+      timeSlot: timeSlot._id,
+      totalPrice,
+      qrCode: QRcode,
+      payment: { orderId, paymentId },
+    });
 
-    booking.timeSlot = timeSlot._id;
-
-    await Promise.all([
-      booking.save(),
-      User.findByIdAndUpdate(userId, { $push: { bookings: booking._id } }),
-    ]);
+    // Update user's bookings
+    await User.findByIdAndUpdate(userId, { 
+      $push: { bookings: booking._id } 
+    });
 
     // Generate and send email
-    const htmlContent = generateHTMLContent(
-      turf.name,
-      turf.location,
-      formattedDate,
-      formattedStartTime,
-      formattedEndTime,
-      totalPrice,
-      QRcode
-    );
+    try {
+      const htmlContent = generateHTMLContent(
+        turf.name,
+        turf.location,
+        formattedDate,
+        formattedStartTime,
+        formattedEndTime,
+        totalPrice,
+        QRcode
+      );
 
-    await generateEmail(user.email, "Booking Confirmation", htmlContent);
+      await generateEmail(
+        user.email,
+        "RiField - Booking Confirmation",
+        htmlContent
+      );
+
+      console.log(chalk.green(`Confirmation email sent to ${user.email}`));
+    } catch (emailError) {
+      console.error(chalk.red("Email sending failed:", emailError));
+      // Don't throw error here - booking was successful
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Booking successful, Check your email for the receipt",
+      message: "Booking successful! Check your email for confirmation.",
     });
+
   } catch (error) {
-    console.error("Error in verifyPayment", error);
+    console.error(chalk.red("Error in verifyPayment:", error));
     return res.status(500).json({
       success: false,
-      message: "An error occurred while processing your booking",
+      message: "An error occurred during booking verification",
     });
-  }
-};
-
-// get bookings for a user
-export const getBookings = async (req, res) => {
-  const userId = req.user.user;
-  try {
-  const bookings = await Booking.find({ user: userId })
-    .sort({ createdAt: -1 })
-    .select("qrCode totalPrice")
-    .populate("timeSlot", "startTime endTime")
-    .populate("turf", "name location");
-      console.log(bookings, "bookings");
-    return res.status(200).json(bookings);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: error.message });
   }
 };
