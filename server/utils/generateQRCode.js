@@ -1,32 +1,37 @@
-import QRCode from "qrcode";
-import cloudinary from "./cloudinary.js"
+// server/utils/generateQRCode.js
 
-async function generateQRCode(
+import QRCode from "qrcode";
+import cloudinary from "./cloudinary.js";
+
+const generateQRCode = async (
   price,
   startTime,
   endTime,
   date,
   turfName,
   location
-) {
+) => {
   try {
-    // Create the content string
-    const content = `Turf Name: ${turfName}\nLocation: ${location}\nPrice: ${price}\nDate: ${date}\nStart Time: ${startTime}\nEnd Time: ${endTime}`;
+    const content = `
+      Booking Details:
+      Turf: ${turfName}
+      Location: ${location}
+      Date: ${date}
+      Time: ${startTime} - ${endTime}
+      Amount: ₹${price}
+    `;
 
-    // Generate QR code as a data URL
     const qrCodeDataURL = await QRCode.toDataURL(content);
 
-    // Upload the QR code to Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(qrCodeDataURL, {
-      folder: "RiField/qrcode"
+      folder: "RiField/qrcodes",
     });
 
-    console.log("QR code has been generated and uploaded successfully!");
     return uploadResponse.secure_url;
   } catch (error) {
-    console.error("Error generating or uploading QR code:", error);
-    throw error;
+    console.error("QR Code generation error:", error);
+    throw new Error("Failed to generate QR code");
   }
-}
+};
 
 export default generateQRCode;

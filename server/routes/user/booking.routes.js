@@ -1,17 +1,17 @@
+// server/routes/user/booking.routes.js
 
 import { Router } from "express";
 import {
-  getBookings,
   createOrder,
   verifyPayment,
-  getBookingDetails
+  getBookings
 } from "../../controllers/user/booking.controller.js";
 import verifyUserToken from "../../middleware/jwt/user.middleware.js";
 
 const bookingRouter = Router();
-bookingRouter.get("/get-bookings", verifyUserToken, getBookings);
-bookingRouter.get("/details/:bookingId", verifyUserToken, getBookingDetails);
+
 bookingRouter.post("/create-order", verifyUserToken, createOrder);
 bookingRouter.post("/verify-payment", verifyUserToken, verifyPayment);
+bookingRouter.get("/get-bookings", verifyUserToken, getBookings);
 
 export default bookingRouter;
