@@ -1,10 +1,8 @@
-// server/routes/user/booking.routes.js
-
 import { Router } from "express";
 import {
-  createOrder,
   verifyPayment,
-  getBookings
+  createOrder,
+  getBookings,
 } from "../../controllers/user/booking.controller.js";
 import verifyUserToken from "../../middleware/jwt/user.middleware.js";
 
