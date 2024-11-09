@@ -1,60 +1,74 @@
- 
 const ReservationSkeleton = () => {
   return (
-    <div className="container mx-auto px-4 py-8 animate-pulse">
-      <div className="h-8 w-48 bg-gray-300 rounded mb-6"></div>
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body p-4 sm:p-6">
-          {/* Date selection skeleton */}
-          <div className="flex flex-col space-y-4 mb-6">
-            <div className="w-full">
-              <div className="h-6 w-24 bg-gray-300 rounded mb-2"></div>
-              <div className="h-10 bg-gray-300 rounded w-full"></div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-              <div className="h-10 w-full sm:w-28 bg-gray-300 rounded"></div>
-              <div className="h-10 w-32 bg-gray-300 rounded"></div>
-              <div className="h-10 w-full sm:w-28 bg-gray-300 rounded"></div>
-            </div>
-          </div>
+    <div className="container mx-auto px-4 py-12 max-w-4xl">
+      {/* Header Skeleton */}
+      <div className="flex flex-col items-center mb-8">
+        <div className="h-10 w-64 bg-gradient-to-r from-base-300 to-base-200 rounded-lg mb-4 animate-pulse"></div>
+        <div className="h-4 w-48 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+      </div>
 
-          {/* Available start times skeleton */}
-          <div>
-            <div className="h-6 w-32 bg-gray-300 rounded mb-4"></div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-4">
-              {[...Array(18)].map((_, index) => (
-                <div key={index} className="h-8 bg-gray-300 rounded"></div>
-              ))}
-            </div>
-          </div>
-
-          {/* Duration selection skeleton */}
-          <div className="mt-6">
-            <div className="h-6 w-32 bg-gray-300 rounded mb-4"></div>
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              {[...Array(3)].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-16 bg-gray-300 rounded flex-1"
-                ></div>
-              ))}
-            </div>
-          </div>
-
-          {/* Selected time summary skeleton */}
-          <div className="mt-6 p-4 bg-base-200 rounded-lg">
-            <div className="h-6 w-40 bg-gray-300 rounded mb-2"></div>
-            {[...Array(4)].map((_, index) => (
-              <div
-                key={index}
-                className="h-4 bg-gray-300 rounded mb-2 w-3/4"
-              ></div>
+      <div className="card bg-base-100 shadow-2xl border border-base-200">
+        <div className="card-body p-6 md:p-8">
+          {/* Progress Indicator */}
+          <div className="flex justify-between mb-8 relative">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex flex-col items-center relative z-10">
+                <div className="w-8 h-8 bg-gradient-to-r from-base-300 to-base-200 rounded-full animate-pulse"></div>
+                <div className="h-3 w-16 bg-gradient-to-r from-base-300 to-base-200 rounded mt-2 animate-pulse"></div>
+              </div>
             ))}
+            <div className="absolute top-4 left-0 right-0 h-1 bg-base-200" style={{ width: '100%', zIndex: 0 }}></div>
           </div>
 
-          {/* Confirm reservation button skeleton */}
-          <div className="mt-6">
-            <div className="h-12 bg-gray-300 rounded w-full"></div>
+          {/* Date Selection Skeleton */}
+          <div className="space-y-6 mb-8">
+            <div className="flex flex-col space-y-2">
+              <div className="h-5 w-32 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+              <div className="h-12 bg-gradient-to-r from-base-300 to-base-200 rounded-lg animate-pulse"></div>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-10 w-32 bg-gradient-to-r from-base-300 to-base-200 rounded-lg animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Time Slots Skeleton */}
+          <div className="space-y-4 mb-8">
+            <div className="h-5 w-40 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="h-12 bg-gradient-to-r from-base-300 to-base-200 rounded-lg animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Duration Selection Skeleton */}
+          <div className="space-y-4 mb-8">
+            <div className="h-5 w-36 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-24 bg-gradient-to-r from-base-300 to-base-200 rounded-lg animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Summary Section Skeleton */}
+          <div className="bg-base-200 rounded-xl p-6 space-y-4">
+            <div className="h-6 w-48 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <div className="h-4 w-24 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-32 bg-gradient-to-r from-base-300 to-base-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Button Skeleton */}
+          <div className="mt-8">
+            <div className="h-14 w-full bg-gradient-to-r from-primary/30 to-primary/20 rounded-lg animate-pulse"></div>
           </div>
         </div>
       </div>
