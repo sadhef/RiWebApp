@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calculator } from 'lucide-react';
-import TaxCalculator from './TaxCalculator.js';
+import TaxCalculator from '@/utils/taxCalculator';
 
 const BillGenerator = () => {
   const [billData, setBillData] = useState({

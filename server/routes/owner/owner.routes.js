@@ -7,6 +7,8 @@ import dashboardRouter from "./dashboard.routes.js"
 import refundRouter from './refund.routes.js';
 import bookingEnhancedRouter from './bookingEnhanced.routes.js';
 import analyticsRouter from './analytics.routes.js';
+import recommendationsRouter from './recommendations.routes.js';
+import billGenerationRouter from './billGeneration.routes.js';
 
 const ownerRouter = Router()
 
@@ -19,4 +21,6 @@ ownerRouter.use("/dashboard", dashboardRouter)
 ownerRouter.use("/refund", refundRouter);
 ownerRouter.use("/bookingEnhanced", bookingEnhancedRouter);
 ownerRouter.use("/analytics", analyticsRouter);
+ownerRouter.use('/recommendations', recommendationsRouter);
+ownerRouter.use('/bills', billGenerationRouter);
 export default ownerRouter;
