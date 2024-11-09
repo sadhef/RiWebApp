@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+mport React, { useState } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input, Select, Button, Alert } from '@/components/ui/form';
 import { Calculator, Download, Save } from 'lucide-react';
-import TaxCalculator from './TaxCalculator';
+import TaxCalculator from './utils/TaxCalculator';
 
 const BillGenerator = () => {
   const [billData, setBillData] = useState({
@@ -20,17 +20,13 @@ const BillGenerator = () => {
 
   const calculateBill = () => {
     const { baseAmount, gstRate, additionalCharges } = billData;
-    const base = parseFloat(baseAmount) || 0;
-    const gst = (base * (parseFloat(gstRate) / 100)) || 0;
-    const additional = parseFloat(additionalCharges) || 0;
+    const result = TaxCalculator.calculateBreakdown(baseAmount, gstRate);
     
-    const total = base + gst + additional;
-
     setCalculatedBill({
-      subTotal: base,
-      gst,
-      additionalCharges: additional,
-      total
+      subTotal: result.baseAmount,
+      gst: result.totalGST,
+      additionalCharges: parseFloat(additionalCharges) || 0,
+      total: result.finalAmount + (parseFloat(additionalCharges) || 0)
     });
   };
 
@@ -116,22 +112,6 @@ const BillGenerator = () => {
               <Calculator className="w-4 h-4" />
               Calculate Bill
             </Button>
-            {calculatedBill && (
-              <PDFDownloadLink
-                document={<BillPDF data={{...billData, ...calculatedBill}} />}
-                fileName={`bill-${billData.customerName.toLowerCase()}.pdf`}
-              >
-                {({ loading }) => (
-                  <Button 
-                    disabled={loading}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    {loading ? 'Generating...' : 'Download PDF'}
-                  </Button>
-                )}
-              </PDFDownloadLink>
-            )}
           </div>
 
           {calculatedBill && (
