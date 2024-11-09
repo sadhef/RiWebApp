@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Trophy, Users, TrendingUp, Clock } from 'lucide-react';
+import axiosInstance from '../../../hooks/useAxiosInstance';
 
 const PersonalizedRecommendations = () => {
   const [recommendations, setRecommendations] = useState({
@@ -14,7 +14,6 @@ const PersonalizedRecommendations = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch recommendations data
     fetchRecommendations();
   }, []);
 
@@ -35,14 +34,12 @@ const PersonalizedRecommendations = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Popular Time Slots */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2">
               <Clock className="w-5 h-5" />
               Popular Time Slots
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={recommendations.popularTimeSlots}>
@@ -54,18 +51,16 @@ const PersonalizedRecommendations = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Customer Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2">
               <Users className="w-5 h-5" />
               Customer Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
             <div className="space-y-4">
               {recommendations.customerPreferences.map((pref, index) => (
                 <div key={index} className="flex justify-between items-center">
@@ -80,18 +75,16 @@ const PersonalizedRecommendations = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Peak Days Analysis */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
               Peak Days Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={recommendations.peakDays}>
@@ -103,18 +96,16 @@ const PersonalizedRecommendations = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Price Optimization */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2">
               <Trophy className="w-5 h-5" />
               Price Optimization
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
             {recommendations.suggestedPricing && (
               <div className="space-y-4">
                 <div className="p-4 bg-base-200 rounded-lg">
@@ -140,8 +131,8 @@ const PersonalizedRecommendations = () => {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
