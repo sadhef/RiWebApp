@@ -1,1 +1,1 @@
-export { default as BillGenerator } from './BillGenerator';
+export { default } from './BillGenerator';

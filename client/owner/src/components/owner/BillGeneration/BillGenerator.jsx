@@ -1,9 +1,6 @@
-mport React, { useState } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input, Select, Button, Alert } from '@/components/ui/form';
-import { Calculator, Download, Save } from 'lucide-react';
-import TaxCalculator from './utils/TaxCalculator';
+import React, { useState } from 'react';
+import { Calculator } from 'lucide-react';
+import TaxCalculator from './TaxCalculator.js';
 
 const BillGenerator = () => {
   const [billData, setBillData] = useState({
@@ -39,79 +36,102 @@ const BillGenerator = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Bill Generator</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Bill Generator</h2>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="text-sm font-medium">Customer Name</label>
-              <Input
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Customer Name</span>
+              </label>
+              <input
+                type="text"
                 name="customerName"
                 value={billData.customerName}
                 onChange={handleInputChange}
                 placeholder="Enter customer name"
+                className="input input-bordered"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Turf Name</label>
-              <Input
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Turf Name</span>
+              </label>
+              <input
+                type="text"
                 name="turfName"
                 value={billData.turfName}
                 onChange={handleInputChange}
                 placeholder="Enter turf name"
+                className="input input-bordered"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Booking Date</label>
-              <Input
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Booking Date</span>
+              </label>
+              <input
                 type="date"
                 name="bookingDate"
                 value={billData.bookingDate}
                 onChange={handleInputChange}
+                className="input input-bordered"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Duration (hours)</label>
-              <Input
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Duration (hours)</span>
+              </label>
+              <input
                 type="number"
                 name="duration"
                 value={billData.duration}
                 onChange={handleInputChange}
                 placeholder="Enter duration"
+                className="input input-bordered"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Base Amount (₹)</label>
-              <Input
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Base Amount (₹)</span>
+              </label>
+              <input
                 type="number"
                 name="baseAmount"
                 value={billData.baseAmount}
                 onChange={handleInputChange}
                 placeholder="Enter base amount"
+                className="input input-bordered"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">GST Rate (%)</label>
-              <Input
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">GST Rate (%)</span>
+              </label>
+              <input
                 type="number"
                 name="gstRate"
                 value={billData.gstRate}
                 onChange={handleInputChange}
-                placeholder="Enter GST rate"
+                className="input input-bordered"
               />
             </div>
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button 
+            <button 
               onClick={calculateBill}
-              className="flex items-center gap-2"
+              className="btn btn-primary"
             >
-              <Calculator className="w-4 h-4" />
+              <Calculator className="w-4 h-4 mr-2" />
               Calculate Bill
-            </Button>
+            </button>
           </div>
 
           {calculatedBill && (
@@ -137,8 +157,8 @@ const BillGenerator = () => {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
