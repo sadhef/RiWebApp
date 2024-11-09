@@ -17,7 +17,7 @@ import {
   OwnerReviews,
   OwnerBookings,
   BillGenerator,
-  PersonalizedRecommendations,
+  PersonalizedRecommendations
 } from "@components/owner";
 
 //  all the components that are used in the admin dashboard
@@ -99,8 +99,8 @@ const router = createBrowserRouter([
       { path: "turfs", element: <TurfManagement /> },
       { path: "reviews", element: <OwnerReviews /> },
       { path: "bookings", element: <OwnerBookings /> },
-      { path: "bills", element: <BillGenerator /> },
-      { path: "recommendations", element: <PersonalizedRecommendations /> },
+      { path: "generate-bills", element: <BillGenerator /> },
+      { path: "smart-insights", element: <PersonalizedRecommendations /> },
     ],
   },
 ]);
