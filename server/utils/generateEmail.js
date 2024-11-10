@@ -232,10 +232,6 @@ export const generateHTMLContent = (turfName, location, date, startTime, endTime
                     <span class="detail-value">${date}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Time</span>
-                    <span class="detail-value">${startTime} - ${endTime}</span>
-                </div>
-                <div class="detail-row">
                     <span class="detail-label">Total Amount</span>
                     <span class="detail-value">₹${totalPrice}</span>
                 </div>
