@@ -1,6 +1,5 @@
 import { Search } from "lucide-react";
 import { motion } from 'framer-motion';
-import { Search } from "lucide-react";
 
 const SearchBar = ({ searchTerm, handleSearch }) => {
   return (
