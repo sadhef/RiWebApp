@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { OwnerSidebar, AuthenticatedNavbar } from "@components/layout";
-import { Loader2, Bell, Help, Settings } from "lucide-react";
+import { Loader2, Bell, HelpCircle, Settings } from "lucide-react";
 
 const OwnerLayout = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +59,7 @@ const OwnerLayout = () => {
 
           {/* Help */}
           <button className="btn btn-ghost btn-circle">
-            <Help className="h-5 w-5" />
+            <HelpCircle className="h-5 w-5" />
           </button>
 
           {/* Settings */}
