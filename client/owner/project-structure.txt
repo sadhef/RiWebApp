@@ -1,0 +1,121 @@
+client
+└── owner
+    ├── src
+    │   ├── App.jsx
+    │   ├── index.css
+    │   ├── main.jsx
+    │   ├── router.jsx
+    │   └── components
+    │       ├── admin
+    │       │   ├── index.jsx
+    │       │   ├── Dashboard
+    │       │   │   ├── AdminDashboard.jsx
+    │       │   │   ├── AdminDashboardSkeleton.jsx
+    │       │   │   ├── BookingHistoryChart.jsx
+    │       │   │   ├── Chart.jsx
+    │       │   │   └── StatCard.jsx
+    │       │   ├── OwnerManagement
+    │       │   │   ├── OwnerCard.jsx
+    │       │   │   ├── OwnerList.jsx
+    │       │   │   ├── OwnersSkeleton.jsx
+    │       │   │   ├── OwnerViewer.jsx
+    │       │   │   └── SearchBar.jsx
+    │       │   ├── OwnerRequests
+    │       │   │   ├── NewOwnerRequests.jsx
+    │       │   │   ├── OwnerRequestsCard.jsx
+    │       │   │   ├── OwnerRequestSearch.jsx
+    │       │   │   ├── OwnerRequestSkeleton.jsx
+    │       │   │   └── RejectedOwnerRequests.jsx
+    │       │   ├── Transactions
+    │       │   │   ├── TransactionFilters.jsx
+    │       │   │   ├── TransactionSection.jsx
+    │       │   │   ├── TransactionSkeleton.jsx
+    │       │   │   └── TransactionTable.jsx
+    │       │   ├── Turf
+    │       │   │   ├── AllTurf.jsx
+    │       │   │   ├── Turf.jsx
+    │       │   │   ├── TurfList.jsx
+    │       │   │   └── TurfSkeleton.jsx
+    │       │   └── UserManagement
+    │       │       ├── SearchInput.jsx
+    │       │       ├── UserCard.jsx
+    │       │       ├── UserPage.jsx
+    │       │       └── UserSkeleton.jsx
+    │       ├── common
+    │       │   ├── Button.jsx
+    │       │   ├── Carousel.jsx
+    │       │   ├── Footer.jsx
+    │       │   ├── FormField.jsx
+    │       │   ├── index.jsx
+    │       │   ├── NotFound.jsx
+    │       │   └── ThemeSwitcher.jsx
+    │       ├── layout
+    │       │   ├── AdminSidebar.jsx
+    │       │   ├── AuthenticatedNavbar.jsx
+    │       │   ├── GuestNavbar.jsx
+    │       │   ├── index.jsx
+    │       │   └── OwnerSidebar.jsx
+    │       ├── owner
+    │       │   ├── index.jsx
+    │       │   ├── Bookings
+    │       │   │   ├── BookingsSkeleton.jsx
+    │       │   │   └── OwnerBookings.jsx
+    │       │   ├── Dashboard
+    │       │   │   ├── DashboardSkeleton.jsx
+    │       │   │   └── OwnerDashboard.jsx
+    │       │   ├── Review
+    │       │   │   ├── OwnerReviews.jsx
+    │       │   │   └── ReviewSkeleton.jsx
+    │       │   └── TurfManagement
+    │       │       ├── AddTurf.jsx
+    │       │       ├── EditTurfForm.jsx
+    │       │       ├── TurfCard.jsx
+    │       │       ├── TurfCardSkeleton.jsx
+    │       │       └── TurfManagement.jsx
+    │       └── ProtectedRoute
+    │           ├── index.jsx
+    │           └── ProtectedRoute.jsx
+    ├── hooks
+    │   ├── useAxiosInstance.js
+    │   ├── useLoginForm.jsx
+    │   ├── useSignUpForm.jsx
+    │   ├── admin
+    │   │   ├── useDashboardData.jsx
+    │   │   ├── useOwnerRequests.jsx
+    │   │   ├── useOwners.jsx
+    │   │   ├── useTransactionData.jsx
+    │   │   ├── useTransactionManagement.jsx
+    │   │   ├── useTurf.jsx
+    │   │   ├── useTurfData.jsx
+    │   │   └── useUsers.jsx
+    │   └── owner
+    │       ├── index.jsx
+    │       ├── useAddTurf.jsx
+    │       ├── useEditTurfForm.jsx
+    │       ├── useOwnerBookings.jsx
+    │       ├── useOwnerDashboard.jsx
+    │       ├── useOwnerReviews.jsx
+    │       └── useTurfManagement.jsx
+    ├── layouts
+    │   ├── AdminLayout.jsx
+    │   ├── GuestLayout.jsx
+    │   ├── index.jsx
+    │   └── OwnerLayout.jsx
+    ├── pages
+    │   ├── Home.jsx
+    │   ├── Login.jsx
+    │   └── SignUp.jsx
+    └── redux
+        ├── rootReducers.js
+        ├── store.js
+        └── slices
+            ├── authSlice.js
+            ├── themeSlice.js
+            └── turfSlice.js
+    ├── .eslintrc.cjs
+    ├── index.html
+    ├── package.json
+    ├── postcss.config.js
+    ├── tailwind.config.js
+    ├── vercel.json
+    └── vite.config.js
